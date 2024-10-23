@@ -155,6 +155,16 @@ void sendMessage(byte b, const String & txt){
 		}
 	}else{
 		mylog.printf("No reponse! (for msg 0x%02x - %s) \n", b, txt.c_str());
+		switch(b){
+			case 0x4F: //Chlorine Target				
+				poolData.targetChlorine = -1; break;
+			case 0x6F: //Chlorine Current
+				poolData.currentChlorine = -1; break;
+			case 0x70: //PH Current
+				poolData.currentPH = -1; break;
+			case 0x50: //PH Target
+				poolData.targetPH = -1; break;
+		}
 	}
 }
 
