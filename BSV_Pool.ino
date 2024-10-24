@@ -32,6 +32,7 @@ struct PoolData{
 	int targetChlorine = 0;
 	int currentPH = 0;
 	int targetPH = 0;
+	int cellIntensityPct = 0;
 };
 
 String ID;
@@ -62,6 +63,10 @@ void handleMetrics() {
 	message += "# HELP phTarget Target PH\n";
 	message += "# TYPE phTarget gauge\n";
 	message += "phTarget" + idString + String(poolData.targetPH) + "\n";
+
+	message += "# HELP cellIntensityPct Cell Intesity Percent \n";
+	message += "# TYPE cellIntensityPct gauge\n";
+	message += "phTarget" + idString + String(poolData.cellIntensityPct) + "\n";
 
 	mylog.getServer()->send(200, "text/plain", message);
 }
@@ -119,7 +124,7 @@ void sendMessage(byte b, const String & txt){
 	int timeout = 0;
 	bool gotResponse = true;
 	while (mySerial.available() == 0) {
-		delay(5);
+		delay(3);
 		timeout++;
 		if(timeout > 10){
 			gotResponse = false;
@@ -148,6 +153,8 @@ void sendMessage(byte b, const String & txt){
 					value = poolData.currentPH = data[1] | data[2] << 8; break;
 				case 0x50: //PH Target
 					value = poolData.targetPH = data[1] | data[2] << 8; break;
+				case 0x43: //Cell Intensity Pct
+					value = poolData.cellIntensityPct = data[1]; break;
 			}
 			mylog.printf("Got a response for msg 0x%02x - %d) \n", b, value);
 		}else{
@@ -164,6 +171,8 @@ void sendMessage(byte b, const String & txt){
 				poolData.currentPH = -1; break;
 			case 0x50: //PH Target
 				poolData.targetPH = -1; break;
+			case 0x43: //Cell Intensity Pct
+				poolData.cellIntensityPct = -1; break;
 		}
 	}
 }
@@ -173,6 +182,7 @@ void updateSensorData(){
 	sendMessage(0x6F, "Current ORP");
 	sendMessage(0x50, "PH Target");
 	sendMessage(0x70, "PH Measurement");
+	sendMessage(0x43, "Cell Intensity Pct");
 }
 
 void loop() {
@@ -191,7 +201,8 @@ void loop() {
 		case '6': sendMessage(0x6F, "Current ORP"); break; //got '0xab 0x02' which is 683
 		case '7': sendMessage(0x50, "PH Target"); break; // got '0xee 0x02 ' which is 750 (signed int)
 		case '8': sendMessage(0x70, "PH Measurement"); break; // got '0xee 0x02 ' which is 750 (signed int)
-		case '9': sendMessage(0x4E, "Salt Concentration"); break;		
+		case '9': sendMessage(0x4E, "Salt Concentration"); break;
+		case '0': sendMessage(0x43, "Cell Intensity Pct"); break;
 	}
 	delay(7);
 
