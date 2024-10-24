@@ -66,7 +66,7 @@ void handleMetrics() {
 
 	message += "# HELP cellIntensityPct Cell Intesity Percent \n";
 	message += "# TYPE cellIntensityPct gauge\n";
-	message += "phTarget" + idString + String(poolData.cellIntensityPct) + "\n";
+	message += "cellIntensityPct" + idString + String(poolData.cellIntensityPct) + "\n";
 
 	mylog.getServer()->send(200, "text/plain", message);
 }
