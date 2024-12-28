@@ -33,6 +33,10 @@ struct PoolData{
 	int currentPH = 0;
 	int targetPH = 0;
 	int cellIntensityPct = 0;
+	int tooMuchSalt = 0;
+	int tooLittleSalt = 0;
+	int phPumpProblem = 0;
+	int acidWarning = 0;
 };
 
 String ID;
@@ -67,6 +71,11 @@ void handleMetrics() {
 	message += "# HELP cellIntensityPct Cell Intesity Percent \n";
 	message += "# TYPE cellIntensityPct gauge\n";
 	message += "cellIntensityPct" + idString + String(poolData.cellIntensityPct) + "\n";
+
+	message += "tooMuchSalt" + idString + String(poolData.tooMuchSalt) + "\n";
+	message += "tooLittleSalt" + idString + String(poolData.tooLittleSalt) + "\n";
+	message += "phPumpProblem" + idString + String(poolData.phPumpProblem) + "\n";
+	message += "acidWarning" + idString + String(poolData.acidWarning) + "\n";
 
 	mylog.getServer()->send(200, "text/plain", message);
 }
@@ -155,6 +164,15 @@ void sendMessage(byte b, const String & txt){
 					value = poolData.targetPH = data[1] | data[2] << 8; break;
 				case 0x43: //Cell Intensity Pct
 					value = poolData.cellIntensityPct = data[1]; break;
+				case 0x77: //warnings
+					value = data[1]; 
+					poolData.tooMuchSalt = (data[1] & (1 << 3)) > 0;
+					poolData.tooLittleSalt = (data[1] & (1 << 2)) > 0;
+					poolData.phPumpProblem = (data[2] & (1 << 0)) > 0;
+					poolData.acidWarning = (data[2] & (1 << 1)) > 0;
+					//mylog.printf("0x%02x %d - 0x%02x %d \n", data[1], data[1], data[2], data[2]);
+					break;
+
 			}
 			mylog.printf("Got a response for msg 0x%02x - %d) \n", b, value);
 		}else{
@@ -173,6 +191,8 @@ void sendMessage(byte b, const String & txt){
 				poolData.targetPH = -1; break;
 			case 0x43: //Cell Intensity Pct
 				poolData.cellIntensityPct = -1; break;
+			case 0x77: //Warnings
+				poolData.tooMuchSalt = poolData.tooLittleSalt = poolData.phPumpProblem = poolData.acidWarning = -1; break;
 		}
 	}
 }
@@ -183,6 +203,7 @@ void updateSensorData(){
 	sendMessage(0x50, "PH Target");
 	sendMessage(0x70, "PH Measurement");
 	sendMessage(0x43, "Cell Intensity Pct");
+	sendMessage(0x77, "Warnings");
 }
 
 void loop() {
@@ -199,9 +220,10 @@ void loop() {
 		case '4': sendMessage(0x5A, "Chlorinator Size"); break;
 		case '5': sendMessage(0x4F, "ORP 0-800 Target"); break;
 		case '6': sendMessage(0x6F, "Current ORP"); break; //got '0xab 0x02' which is 683
-		case '7': sendMessage(0x50, "PH Target"); break; // got '0xee 0x02 ' which is 750 (signed int)
+		//case '7': sendMessage(0x50, "PH Target"); break; // got '0xee 0x02 ' which is 750 (signed int)
 		case '8': sendMessage(0x70, "PH Measurement"); break; // got '0xee 0x02 ' which is 750 (signed int)
-		case '9': sendMessage(0x4E, "Salt Concentration"); break;
+		//case '9': sendMessage(0x4E, "Salt Concentration"); break;
+		case '9': sendMessage(0x77, "Warnings"); break;
 		case '0': sendMessage(0x43, "Cell Intensity Pct"); break;
 	}
 	delay(7);
