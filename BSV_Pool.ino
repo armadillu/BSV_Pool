@@ -121,9 +121,9 @@ void sendMessage(byte b, const String & txt){
 
 	byte msg[] = { 0x3F, 0x79, 0x04 };
 	msg[1] = b;
-	String logLine = "Sending " + txt + " - 0x" + String((int)b, HEX) + " '" + String((char)b) + "'\n" ;
-	mylog.print(logLine);
-	TelnetStream.print(logLine);
+	//String logLine = "Sending " + txt + " - 0x" + String((int)b, HEX) + " '" + String((char)b) + "'\n" ;
+	//mylog.print(logLine);
+	//TelnetStream.print(logLine);
 	
 	//send data
 	mySerial.write(msg, 3);
@@ -174,7 +174,7 @@ void sendMessage(byte b, const String & txt){
 					break;
 
 			}
-			mylog.printf("Got a response for msg 0x%02x - %d) \n", b, value);
+			//mylog.printf("Got a response for msg 0x%02x - %d) \n", b, value);
 		}else{
 			mylog.printf("Error, unexpected respose from BSV! (for msg 0x%02x - %s) \n", b, txt.c_str());
 		}
@@ -198,6 +198,7 @@ void sendMessage(byte b, const String & txt){
 }
 
 void updateSensorData(){
+	mylog.printf("Update Sensor Data!\n");
 	sendMessage(0x4F, "ORP 0-800 Target");
 	sendMessage(0x6F, "Current ORP");
 	sendMessage(0x50, "PH Target");
@@ -226,11 +227,12 @@ void loop() {
 		case '9': sendMessage(0x77, "Warnings"); break;
 		case '0': sendMessage(0x43, "Cell Intensity Pct"); break;
 	}
-	delay(7);
+	int sleepMS = 100;
+	delay(sleepMS);
 
 	//update sensor data
 	frameCounter++;
-	if(frameCounter > 15000 || frameCounter < 0){
+	if(frameCounter * sleepMS > 14 * 1000 || frameCounter < 0){
 		frameCounter = 0;
 		updateSensorData();
 	}
